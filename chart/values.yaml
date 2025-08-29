@@ -2438,6 +2438,7 @@ grpcPoller:
           )
           main()
 
+
 metricsExporter:
   image:
     repository: telegraf
@@ -2653,6 +2654,7 @@ metricsExporter:
         metric_version = 2
         string_as_label = false
         collectors_exclude = ["gocollector", "process"]
+
 
 service:
   annotations: {}

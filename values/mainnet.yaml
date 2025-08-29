@@ -1,0 +1,11 @@
+nodeSelector:
+  node-role/zkrabbit: monitoring
+grpcPoller:
+  image:
+    repository: fedora
+    tag: latest
+  grpcHost: rpc.mainnet.succinct.xyz:443
+  metricsExporter:
+    image:
+      repository: telegraf
+      tag: 1.35.4-alpine
