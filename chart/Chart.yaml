@@ -1,0 +1,11 @@
+apiVersion: v2
+name: succinct-external-monitoring
+description: A helm chart for succinct-external-monitoring
+sources:
+  - https://github.com/zk-rabbit/succinct-external-monitoring
+type: application
+version: 0.0.1
+appVersion: 0.0.1
+maintainers:
+  - name: Snow Park
+    email: snow@a41.io

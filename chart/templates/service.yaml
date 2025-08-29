@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "succinct-external-monitoring.fullname" . }}
+  labels:
+    {{- include "succinct-external-monitoring.labels" . | nindent 4 }}
+  annotations:
+  {{- if .Values.service.annotations }}
+    {{- toYaml .Values.service.annotations | nindent 4 }}
+  {{- else }}
+    {{- toYaml .Values.annotations | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  {{- with .Values.service.loadBalancerIP }}
+  loadBalancerIP: {{ . }}
+  {{- end }}
+  {{- if or (eq .Values.service.type "LoadBalancer") (eq .Values.service.type "NodePort") }}
+  externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy }}
+  {{- end }}
+  ports:
+    - name: metrics
+      port: {{ .Values.metricsExporter.metricPort }}
+      targetPort: metrics
+      protocol: TCP
+  selector:
+    {{- include "succinct-external-monitoring.selectorLabels" . | nindent 4 }}

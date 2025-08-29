@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "succinct-external-monitoring.fullname" . }}-proto
+  labels:
+    {{- include "succinct-external-monitoring.labels" . | nindent 4 }}
+data:
+  types.proto: |-
+    {{ .Values.grpcPoller.proto.types | nindent 4 }}
+  network.proto: |-
+    {{ .Values.grpcPoller.proto.network | nindent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "succinct-external-monitoring.fullname" . }}-script
+  labels:
+    {{- include "succinct-external-monitoring.labels" . | nindent 4 }}
+data:
+  polling.py: |-
+    {{ .Values.grpcPoller.script.polling | nindent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "succinct-external-monitoring.fullname" . }}-config
+  labels:
+    {{- include "succinct-external-monitoring.labels" . | nindent 4 }}
+data:
+  telegraf.conf: |-
+    {{ .Values.metricsExporter.config.telegraf | nindent 4 }}

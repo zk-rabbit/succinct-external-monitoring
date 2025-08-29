@@ -1,0 +1,33 @@
+volumes:
+  prover-data: {}
+
+services:
+  grpc-poller:
+    image: fedora:latest
+    volumes:
+      - prover-data:/data
+      - ./proto:/proto:ro
+      - ./script:/script
+    environment:
+      - GRPC_IMPORT_PATH=/proto
+      - OUTPUT_PATH=/data
+    command:
+      - sh
+      - -c
+      - |
+        set -o errexit -o nounset -o pipefail
+
+        printf '[%s] Dependency setup start\n' "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
+        dnf --quiet --assumeyes install grpcurl python3
+        chmod -R +x /script
+        printf '[%s] Dependency setup finish\n' "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
+        
+        python3 /script/polling.py
+  
+  metric-exporter:
+    image: telegraf:1.35.4-alpine
+    ports:
+      - "9273:9273"
+    volumes:
+      - prover-data:/data:ro
+      - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro

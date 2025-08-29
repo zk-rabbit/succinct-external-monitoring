@@ -1,0 +1,223 @@
+syntax = "proto3";
+
+import "types.proto";
+
+package network;
+
+service ProverNetwork {
+  /*
+   * Proofs
+   *
+   * These methods are for managing proof requests.
+   */
+
+  // Creates a proof request.
+  rpc RequestProof(types.RequestProofRequest) returns (types.RequestProofResponse) {}
+  // Fulfills a proof request. Only callable by the assigned fulfiller.
+  rpc FulfillProof(types.FulfillProofRequest) returns (types.FulfillProofResponse) {}
+  // Executes a proof request. Only callable by the execution oracle.
+  rpc ExecuteProof(types.ExecuteProofRequest) returns (types.ExecuteProofResponse) {}
+
+  // Fails fulfillment. Only callable by the assigned fulfiller.
+  rpc FailFulfillment(types.FailFulfillmentRequest) returns (types.FailFulfillmentResponse) {}
+
+  // Get the status of a proof request.
+  rpc GetProofRequestStatus(types.GetProofRequestStatusRequest)
+      returns (types.GetProofRequestStatusResponse) {}
+  // Get the details of a proof request.
+  rpc GetProofRequestDetails(types.GetProofRequestDetailsRequest)
+      returns (types.GetProofRequestDetailsResponse) {}
+  // Get the proof requests that meet the filter criteria.
+  rpc GetFilteredProofRequests(types.GetFilteredProofRequestsRequest)
+      returns (types.GetFilteredProofRequestsResponse) {}
+  // Subscribe to proof requests that meet the filter criteria.
+  rpc SubscribeProofRequests(types.GetFilteredProofRequestsRequest)
+    returns (stream types.ProofRequest) {}
+  // Search for proof requests, programs, and requesters.
+  rpc GetSearchResults(types.GetSearchResultsRequest) returns (types.GetSearchResultsResponse) {}
+  // Get metrics for proof requests.
+  rpc GetProofRequestMetrics(types.GetProofRequestMetricsRequest)
+      returns (types.GetProofRequestMetricsResponse) {}
+  // Get time series data for proof requests.
+  rpc GetProofRequestGraph(types.GetProofRequestGraphRequest)
+      returns (types.GetProofRequestGraphResponse) {}
+  // Get analytics graphs for proof requests.
+  rpc GetAnalyticsGraphs(types.GetAnalyticsGraphsRequest)
+      returns (types.GetAnalyticsGraphsResponse) {}
+  // Get overview graphs for proof requests.
+  rpc GetOverviewGraphs(types.GetOverviewGraphsRequest)
+      returns (types.GetOverviewGraphsResponse) {}
+  // Get network proof request parameters.
+  rpc GetProofRequestParams(types.GetProofRequestParamsRequest)
+      returns (types.GetProofRequestParamsResponse) {}
+
+  /*
+   * Accounts
+   *
+   * These methods are for managing accounts.
+   */
+
+  // Get the nonce of the account.
+  rpc GetNonce(types.GetNonceRequest) returns (types.GetNonceResponse) {}
+  // Set the name of the account.
+  rpc SetAccountName(types.SetAccountNameRequest) returns (types.SetAccountNameResponse) {}
+  // Get the name of the account.
+  rpc GetAccountName(types.GetAccountNameRequest) returns (types.GetAccountNameResponse) {}
+  // Get whether the account has signed the terms.
+  rpc GetTermsSignature(types.GetTermsSignatureRequest) returns (types.GetTermsSignatureResponse) {}
+  // Set whether the account has signed the terms.
+  rpc SetTermsSignature(types.SetTermsSignatureRequest) returns (types.SetTermsSignatureResponse) {}
+  // Get all the information about an account.
+  rpc GetAccount(types.GetAccountRequest) returns (types.GetAccountResponse) {}
+  // Get the owner of an account. Returns itself if the account is not delegated.
+  rpc GetOwner(types.GetOwnerRequest) returns (types.GetOwnerResponse) {}
+
+  /*
+   * Programs
+   *
+   * These methods are for managing programs.
+   */
+
+
+  // Get metadata about a program.
+  rpc GetProgram(types.GetProgramRequest) returns (types.GetProgramResponse) {}
+  // Create a new program. Must be called before requesting proofs.
+  rpc CreateProgram(types.CreateProgramRequest) returns (types.CreateProgramResponse) {}
+  // Set the name of the program. Only callable by the owner.
+  rpc SetProgramName(types.SetProgramNameRequest) returns (types.SetProgramNameResponse) {}
+
+  /*
+   * Payments
+   *
+   * These methods are for managing payments.
+   */
+
+  // Get the available balance of an account.
+  rpc GetBalance(types.GetBalanceRequest) returns (types.GetBalanceResponse) {}
+  // Get the balance logs that meet the filter criteria.
+  rpc GetFilteredBalanceLogs(types.GetFilteredBalanceLogsRequest)
+      returns (types.GetFilteredBalanceLogsResponse) {}
+  // Get the latest processed block in the bridge.
+  rpc GetLatestBridgeBlock(types.GetLatestBridgeBlockRequest)
+      returns (types.GetLatestBridgeBlockResponse) {}
+  // Get the gas price estimate for a given fulfillment strategy.
+  rpc GetGasPriceEstimate(types.GetGasPriceEstimateRequest) returns (types.GetGasPriceEstimateResponse) {}
+  // Get the details of a transaction.
+  rpc GetTransactionDetails(types.GetTransactionDetailsRequest) returns (types.GetTransactionDetailsResponse) {}
+  // Transfer $PROVE from one account to another.
+  rpc Transfer(types.TransferRequest) returns (types.TransferResponse) {}
+  // Get transfer parameters.
+  rpc GetTransferParams(types.GetTransferParamsRequest)
+      returns (types.GetTransferParamsResponse) {}
+  // Get withdraw parameters.
+  rpc GetWithdrawParams(types.GetWithdrawParamsRequest)
+      returns (types.GetWithdrawParamsResponse) {}
+  // Withdraw $PROVE from an account.
+  rpc Withdraw(types.WithdrawRequest) returns (types.WithdrawResponse) {}
+
+  /*
+   * Auction
+   *
+   * These methods are for managing the proof contest auction.
+   */
+
+  // Bid for a proof request. Provers that want to be assigned this request must first
+  // bid on it.
+  rpc Bid(types.BidRequest) returns (types.BidResponse) {}
+  // Settle the bids on a proof request to choose the assigned prover. Only callable by
+  // the approved auctioneer.
+  rpc Settle(types.SettleRequest) returns (types.SettleResponse) {}
+  // Get the provers that have historically had reliable uptime.
+  rpc GetProversByUptime(types.GetProversByUptimeRequest) returns (types.GetProversByUptimeResponse) {}
+  // Get settleable proof requests that have passed auction period and have bids.
+  rpc GetFilteredSettleableRequests(types.GetFilteredSettleableRequestsRequest)
+      returns (types.GetFilteredSettleableRequestsResponse) {}
+  // Get suspendable provers that have recently failed proofs.
+  rpc GetFilteredSuspendableProvers(types.GetFilteredSuspendableProversRequest)
+      returns (types.GetFilteredSuspendableProversResponse) {}
+  // Suspend a prover.
+  rpc SuspendProver(types.SuspendProverRequest)
+      returns (types.SuspendProverResponse) {}
+
+  /*
+   * Frontend
+   *
+   * These methods are for managing the frontend.
+   */
+
+  // Sign in with Ethereum
+  rpc SignIn(types.SignInRequest) returns (types.SignInResponse) {}
+  // Connect a Twitter account.
+  rpc ConnectTwitter(types.ConnectTwitterRequest) returns (types.ConnectTwitterResponse) {}
+
+  /*
+   * Provers
+   *
+   * These methods are for managing provers.
+   */
+
+  // Get metrics for a specific prover
+  rpc GetProverStats(types.GetProverStatsRequest) returns (types.GetProverStatsResponse) {}
+  // Get statistics for all provers with pagination
+  rpc GetFilteredProverStats(types.GetFilteredProverStatsRequest) returns (types.GetFilteredProverStatsResponse) {}
+  // Get detailed statistics for a single prover by address
+  rpc GetProverStatsDetail(types.GetProverStatsDetailRequest) returns (types.GetProverStatsDetailResponse) {}
+  // Get search results for provers
+  rpc GetProverSearchResults(types.GetProverSearchResultsRequest) returns (types.GetProverSearchResultsResponse) {}
+  // Search provers by name or address with staking information
+  rpc GetStakingProverSearch(types.GetStakingProverSearchRequest) returns (types.GetStakingProverSearchResponse) {}
+  // Get paginated auction history
+  rpc GetFilteredBidHistory(types.GetFilteredBidHistoryRequest) returns (types.GetFilteredBidHistoryResponse) {}
+  // Get filtered bid history for a prover with pagination
+  rpc GetFilteredProverBidHistory(types.GetFilteredProverBidHistoryRequest) returns (types.GetFilteredProverBidHistoryResponse) {}
+
+  /*
+   *
+   * TEE Methods
+   *
+   */
+   // Check if the user is whitelisted to use the TEE service.
+   rpc GetTEEWhitelistStatus(types.GetTEEWhitelistStatusRequest)
+      returns (types.GetTEEWhitelistStatusResponse) {}
+
+  /*
+   * Staking
+   *
+   * These methods are for managing staking.
+   */
+   
+   // Get the provers that meet the filter criteria.
+   rpc GetFilteredProvers(types.GetFilteredProversRequest)
+      returns (types.GetFilteredProversResponse) {}
+   // Get the available balance of a prover.
+   rpc GetProverStakeBalance(types.GetProverStakeBalanceRequest) returns (types.GetProverStakeBalanceResponse) {}
+   // Get the staker balance logs that meet the filter criteria.
+   rpc GetFilteredStakerStakeBalanceLogs(types.GetFilteredStakerStakeBalanceLogsRequest)
+      returns (types.GetFilteredStakerStakeBalanceLogsResponse) {}
+   // Get the prover balance logs that meet the filter criteria.
+   rpc GetFilteredProverStakeBalanceLogs(types.GetFilteredProverStakeBalanceLogsRequest)
+      returns (types.GetFilteredProverStakeBalanceLogsResponse) {}
+
+  /*
+   * Delegations
+   *
+   * These methods are for managing delegations.
+   */
+
+   // Get the delegation parameters.
+   rpc GetDelegationParams(types.GetDelegationParamsRequest)
+      returns (types.GetDelegationParamsResponse) {}
+   // Set a delegation.
+   rpc SetDelegation(types.SetDelegationRequest) returns (types.SetDelegationResponse) {}
+   // Get a delegation.
+   rpc GetDelegation(types.GetDelegationRequest) returns (types.GetDelegationResponse) {}
+
+   /*
+   * Withdrawals
+   *
+   * These methods are for managing withdrawals.
+   */
+   // Get the withdrawal receipts of an account.
+   rpc GetFilteredWithdrawalReceipts(types.GetFilteredWithdrawalReceiptsRequest)
+      returns (types.GetFilteredWithdrawalReceiptsResponse) {}
+}

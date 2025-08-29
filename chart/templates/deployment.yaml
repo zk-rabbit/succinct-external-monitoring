@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "succinct-external-monitoring.fullname" . }}
+  labels:
+    {{- include "succinct-external-monitoring.labels" . | nindent 4 }}
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      {{- include "succinct-external-monitoring.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: {{ .Values.strategy.type }}
+    {{- if eq .Values.strategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.strategy.rollingUpdate.maxUnavailable }}
+      maxSurge: {{ .Values.strategy.rollingUpdate.maxSurge }}
+    {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "succinct-external-monitoring.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      containers:
+        - name: {{ .Chart.Name }}-grpc-poller
+          image: "{{ .Values.grpcPoller.image.repository }}:{{ .Values.grpcPoller.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.grpcPoller.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.grpcPoller.containerSecurityContext | nindent 12 }}
+          command:
+            - "sh"
+            - "-c"
+            - |
+              set -o errexit -o nounset -o pipefail
+              printf '[%s] Dependency setup start\n' "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
+              dnf --quiet --assumeyes install grpcurl python3
+              printf '[%s] Dependency setup finish\n' "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
+              python3 {{ .Values.grpcPoller.scriptPath }}/polling.py
+          env:
+            - name: GRPC_HOST
+              value: {{ .Values.grpcPoller.grpcHost | quote }}
+            - name: GRPC_IMPORT_PATH
+              value: {{ .Values.grpcPoller.grpcImportPath | quote }}
+            - name: SCRIPT_PATH
+              value: {{ .Values.grpcPoller.scriptPath | quote }}
+            - name: OUTPUT_PATH
+              value: {{ .Values.grpcPoller.outputPath | quote }}
+          {{- with .Values.grpcPoller.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.grpcPoller.resources | nindent 12 }}
+          volumeMounts:
+            - name: proto
+              mountPath: {{ .Values.grpcPoller.grpcImportPath | quote }}
+            - name: script
+              mountPath: {{ .Values.grpcPoller.scriptPath | quote }}
+            - name: data
+              mountPath: {{ .Values.grpcPoller.outputPath | quote }}
+        - name: {{ .Chart.Name }}-metric-exporter
+          image: "{{ .Values.metricsExporter.image.repository }}:{{ .Values.metricsExporter.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.metricsExporter.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.metricsExporter.containerSecurityContext | nindent 12 }}
+          {{- with .Values.metricsExporter.extraEnv }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.metricsExporter.metricPort }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.metricsExporter.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: {{ .Values.metricsExporter.configPath | quote }}
+            - name: data
+              mountPath: {{ .Values.metricsExporter.outputPath | quote }}
+      volumes:
+        - name: proto
+          configMap:
+            name: {{ include "succinct-external-monitoring.fullname" . }}-proto
+            defaultMode: 0444
+        - name: script
+          configMap:
+            name: {{ include "succinct-external-monitoring.fullname" . }}-script
+            defaultMode: 0555
+        - name: config
+          configMap:
+            name: {{ include "succinct-external-monitoring.fullname" . }}-config
+            defaultMode: 0755
+        - name: data
+          emptyDir: {}
