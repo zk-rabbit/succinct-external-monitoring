@@ -1,3 +1,4 @@
+fullnameOverride: "sp1-ext-monitor-mainnet"
 nodeSelector:
   node-role/zkrabbit: monitoring
 grpcPoller:
