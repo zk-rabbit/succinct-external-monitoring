@@ -6,9 +6,9 @@ metadata:
     {{- include "succinct-external-monitoring.labels" . | nindent 4 }}
 data:
   types.proto: |-
-    {{ .Values.grpcPoller.proto.types | nindent 4 }}
+    {{ .Files.Get "files/proto/succinct-network/proto/types.proto" | nindent 4 }}
   network.proto: |-
-    {{ .Values.grpcPoller.proto.network | nindent 4 }}
+    {{ .Files.Get "files/proto/succinct-network/proto/network.proto" | nindent 4 }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -18,7 +18,7 @@ metadata:
     {{- include "succinct-external-monitoring.labels" . | nindent 4 }}
 data:
   polling.py: |-
-    {{ .Values.grpcPoller.script.polling | nindent 4 }}
+    {{ .Files.Get "files/script/polling.py" | nindent 4 }}
 ---
 apiVersion: v1
 kind: ConfigMap
