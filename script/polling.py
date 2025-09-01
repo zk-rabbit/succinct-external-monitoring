@@ -15,6 +15,9 @@ from functools import partial
 
 GRPC_PROTO_IMPORT_PATH = os.getenv("GRPC_IMPORT_PATH", "./proto")
 GRPC_HOST = os.getenv("GRPC_HOST", "rpc.mainnet.succinct.xyz:443")
+OUTPUT_PATH = Path(os.getenv("OUTPUT_PATH", "./data"))
+TOKEN_UNIT_FACTOR = int(os.getenv("TOKEN_UNIT_FACTOR", 18))
+BILLION_DECIMALS = 9
 
 
 @dataclass
@@ -49,14 +52,14 @@ class ProofRequest:
     cycle_limit: int
     gas_limit: int
     timeout: int
-    base_fee: int
-    max_price_per_pgu: int
+    base_fee: float
+    max_price_per_billion_pgu: float
     whitelist_count: int
-    fulfiller: Optional[str] = None # assigned, fulfilled, unfulfillable
-    cycles: Optional[int] = None # fulfilled
-    gas_used: Optional[int] = None # fulfilled
-    gas_price: Optional[int] = None # assigned, fulfilled, unfulfillable
-    turnaround: Optional[int] = None # fulfilled
+    fulfiller: Optional[str] = None # exist in status assigned, fulfilled, unfulfillable
+    cycles: Optional[int] = None # exist in status fulfilled
+    gas_used: Optional[int] = None # exist in status fulfilled
+    gas_price: Optional[int] = None # exist in status assigned, fulfilled, unfulfillable
+    turnaround: Optional[int] = None # exist in status fulfilled
 
 
 @dataclass
@@ -68,10 +71,9 @@ class ProverStat:
     tx_hash: str
     total_auction_requests: int
     successful_requests: int
-    total_gas_proved: int
+    total_billion_gas_proved: float
     last_active_at: int
-    total_earnings: int
-    lifetime_rewards: int
+    lifetime_rewards: float
     staker_fee_bips: int
 
 
@@ -84,7 +86,7 @@ class SuspendableProver:
 @dataclass
 class ProverBidHistory:
     bidder: str
-    amount: int
+    amount_billion: float
     created_at: int
 
 
@@ -132,8 +134,7 @@ def call_grpcurl(import_path: str, host: str, method: str, payload: Dict[str, An
 
 
 def write_output(filename: str, data: Dict[str, Any]) -> None:
-    output_path = Path(os.getenv("OUTPUT_PATH", "./data"))
-    file_path = output_path / filename
+    file_path = OUTPUT_PATH / filename
 
     file_path.parent.mkdir(parents=True, exist_ok=True)
     with open(file_path, 'w', encoding='utf-8') as f:
@@ -182,8 +183,8 @@ def get_filtered_proof_requests(fulfillment: FulfillmentStatus) -> List[ProofReq
                 cycle_limit=int(req.get("cycleLimit")),
                 gas_limit=int(req.get("gasLimit")),
                 timeout=( int(req.get("deadline")) - int(req.get("createdAt")) ),
-                base_fee=int(req.get("baseFee")),
-                max_price_per_pgu=int(req.get("maxPricePerPgu")),
+                base_fee=int(req.get("baseFee")) / 10**TOKEN_UNIT_FACTOR,
+                max_price_per_billion_pgu=int(req.get("maxPricePerPgu")) / 10**TOKEN_UNIT_FACTOR * 10**BILLION_DECIMALS,
                 whitelist_count=len(req.get("whitelist") or []),
             )
 
@@ -239,10 +240,9 @@ def get_filtered_prover_stats(is_featured: bool) -> List[ProverStat]:
                 tx_hash=b64_to_hex(stat.get("txHash")) or "",
                 total_auction_requests=int(stat.get("totalAuctionRequests")),
                 successful_requests=int(stat.get("successfulRequests")),
-                total_gas_proved=int(stat.get("totalGasProved")),
+                total_billion_gas_proved=int(stat.get("totalGasProved")) / 10**BILLION_DECIMALS,
                 last_active_at=int(stat.get("lastActiveAt")),
-                total_earnings=int(stat.get("totalEarnings")),
-                lifetime_rewards=int(stat.get("lifetimeRewards")),
+                lifetime_rewards=int(stat.get("lifetimeRewards")) / 10**TOKEN_UNIT_FACTOR,
                 staker_fee_bips=int(stat.get("stakerFeeBips")),
             ))
 
@@ -325,7 +325,7 @@ def get_filtered_prover_bid_history(is_featured: bool) -> List[ProverBidHistory]
             for bid in bids:
                 all_bids.append(ProverBidHistory(
                     bidder=b64_to_hex(bid.get("bidder")) or "",
-                    amount=int(bid.get("amount")),
+                    amount_billion=int(bid.get("amount")) / 10**TOKEN_UNIT_FACTOR * 10**BILLION_DECIMALS,
                     created_at=int(bid.get("createdAt")) or 0,
                 ))
 
