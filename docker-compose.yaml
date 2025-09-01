@@ -6,8 +6,8 @@ services:
     image: fedora:latest
     volumes:
       - prover-data:/data
-      - ./proto:/proto:ro
-      - ./script:/script
+      - ./chart/files/proto/succinct-network/proto:/proto:ro
+      - ./chart/files/script:/script
     environment:
       - GRPC_IMPORT_PATH=/proto
       - OUTPUT_PATH=/data

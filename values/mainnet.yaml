@@ -6,7 +6,198 @@ grpcPoller:
     repository: fedora
     tag: latest
   grpcHost: rpc.mainnet.succinct.xyz:443
-  metricsExporter:
-    image:
-      repository: telegraf
-      tag: 1.35.4-alpine
+metricsExporter:
+  image:
+    repository: telegraf
+    tag: 1.35.4-alpine
+  config:
+    telegraf: |-
+      [agent]
+        interval = "10s"
+        round_interval = true
+        flush_interval = "10s"
+        omit_hostname = true
+        skip_processors_after_aggregators = false
+
+      [[inputs.file]]
+        files = ["/data/requested_proof_requests.json"]
+        data_format = "json_v2"
+
+        [[inputs.file.json_v2]]
+          measurement_name = "succinct_proof_request"
+
+          [[inputs.file.json_v2.object]]
+            path = "requests"
+            disable_prepend_keys = true
+            tags = [
+              "fulfillment",
+              "version",
+              "mode",
+              "strategy"
+            ]
+            [inputs.file.json_v2.object.fields]
+              timeout = "int"
+              cycle_limit = "int"
+              gas_limit = "int"
+              base_fee = "float"
+              max_price_per_billion_pgu = "float"
+
+      [[inputs.file]]
+        files = ["/data/assigned_proof_requests.json"]
+        data_format = "json_v2"
+
+        [[inputs.file.json_v2]]
+          measurement_name = "succinct_proof_request"
+
+          [[inputs.file.json_v2.object]]
+            path = "requests"
+            disable_prepend_keys = true
+            tags = [
+              "fulfillment",
+              "version",
+              "mode",
+              "strategy"
+            ]
+            [inputs.file.json_v2.object.fields]
+              whitelist_count = "int"
+              timeout = "int"
+              cycle_limit = "int"
+              gas_limit = "int"
+              gas_price = "int"
+              base_fee = "float"
+              max_price_per_billion_pgu = "float"
+
+      [[inputs.file]]
+        files = ["/data/fulfilled_proof_requests.json"]
+        data_format = "json_v2"
+
+        [[inputs.file.json_v2]]
+          measurement_name = "succinct_proof_request"
+
+          [[inputs.file.json_v2.object]]
+            path = "requests"
+            disable_prepend_keys = true
+            tags = [
+              "fulfillment",
+              "version",
+              "mode",
+              "strategy"
+            ]
+            [inputs.file.json_v2.object.fields]
+              whitelist_count = "int"
+              timeout = "int"
+              turnaround = "int"
+              cycle_limit = "int"
+              cycles = "int"
+              gas_limit = "int"
+              gas_used = "int"
+              gas_price = "int"
+              base_fee = "float"
+              max_price_per_billion_pgu = "float"
+
+      [[inputs.file]]
+        files = ["/data/unfulfillable_proof_requests.json"]
+        data_format = "json_v2"
+
+        [[inputs.file.json_v2]]
+          measurement_name = "succinct_proof_request"
+
+          [[inputs.file.json_v2.object]]
+            path = "requests"
+            disable_prepend_keys = true
+            tags = [
+              "fulfillment",
+              "version",
+              "mode",
+              "strategy"
+            ]
+            [inputs.file.json_v2.object.fields]
+              whitelist_count = "int"
+              timeout = "int"
+              cycle_limit = "int"
+              gas_limit = "int"
+              base_fee = "float"
+              max_price_per_billion_pgu = "float"
+
+      [[inputs.file]]
+        files = ["/data/prover_stats.json"]
+        data_format = "json_v2"
+
+        [[inputs.file.json_v2]]
+          measurement_name = "succinct_prover"
+
+          [[inputs.file.json_v2.object]]
+            path = "stats"
+            disable_prepend_keys = true
+            tags = [
+              "name",
+              "address"
+            ]
+            [inputs.file.json_v2.object.fields]
+              created_at = "int"
+              last_active_at = "int"
+              staker_fee_bips = "int"
+              total_auction_requests = "int"
+              successful_requests = "int"
+              total_billion_gas_proved = "float"
+              lifetime_rewards = "float"
+
+      [[inputs.file]]
+        files = ["/data/suspendable_provers.json"]
+        data_format = "json_v2"
+
+        [[inputs.file.json_v2]]
+          measurement_name = "succinct_suspendable_prover"
+
+          [[inputs.file.json_v2.object]]
+            path = "provers"
+            disable_prepend_keys = true
+            tags = [
+              "address"
+            ]
+            [inputs.file.json_v2.object.fields]
+              failure_count = "int"
+
+      [[inputs.file]]
+        files = ["/data/prover_bid_stats.json"]
+        data_format = "json_v2"
+
+        [[inputs.file.json_v2]]
+          measurement_name = "succinct_prover_bid"
+
+          [[inputs.file.json_v2.object]]
+            path = "bids"
+            disable_prepend_keys = true
+            tags = [
+              "bidder"
+            ]
+            [inputs.file.json_v2.object.fields]
+              amount_billion = "float"
+
+      [[aggregators.basicstats]]
+        namepass = ["succinct_proof_request"]
+        period = "10s"
+        drop_original = true
+        stats = ["mean","min","max"]
+        fieldpass = [
+          "cycle_limit",
+          "base_fee",
+          "max_price_per_billion_pgu",
+          "timeout",
+          "gas_limit",
+          "whitelist_count"
+        ]
+
+      [[aggregators.basicstats]]
+        namepass = ["succinct_prover_bid"]
+        period = "10s"
+        drop_original = true
+        stats = ["mean","min","max"]
+        fieldpass = ["amount_billion"]
+
+      [[outputs.prometheus_client]]
+        listen = ":9273"
+        path = "/metrics"
+        metric_version = 2
+        string_as_label = false
+        collectors_exclude = ["gocollector", "process"]
